@@ -55,7 +55,7 @@ public class Nodo2 {
 
                     System.out.println("Enviado al Nodo 3 -> " + mensajeSalida);
                 } catch (RuntimeException e) {
-                    // Un mensaje malformado no debe tumbar el servidor: se registra y se sigue escuchando.
+                    
                     System.out.println("Mensaje descartado, no se pudo procesar: " + e.getMessage());
                 }
             }
