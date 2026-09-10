@@ -1,0 +1,22 @@
+{
+  "name": "rabbitmq-routing-presentation",
+  "version": "1.0.0",
+  "description": "Tutorial y ejemplo practico de RabbitMQ Routing con Direct Exchange",
+  "main": "tutorial/emit_log_direct.js",
+  "scripts": {
+    "emit:info": "node tutorial/emit_log_direct.js info \"Sistema operando con normalidad\"",
+    "emit:warning": "node tutorial/emit_log_direct.js warning \"Uso de memoria al 85%\"",
+    "emit:error": "node tutorial/emit_log_direct.js error \"Base de datos no responde\"",
+    "recv:all": "node tutorial/receive_logs_direct.js info warning error",
+    "recv:errors": "node tutorial/receive_logs_direct.js error",
+    "campus:emit:matricula": "node ejemplo_practico/emisor_campus.js matricula \"Inscripciones abiertas para el ciclo 2026-II\"",
+    "campus:emit:pagos": "node ejemplo_practico/emisor_campus.js pagos \"Nuevo comprobante emitido #48291\"",
+    "campus:emit:urgente": "node ejemplo_practico/emisor_campus.js urgente \"Alerta meteorologica: Clases virtuales a partir de las 14:00\"",
+    "campus:alumnos": "node ejemplo_practico/consumidor_alumnos.js",
+    "campus:caja": "node ejemplo_practico/consumidor_caja.js",
+    "campus:seguridad": "node ejemplo_practico/consumidor_seguridad.js"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.4"
+  }
+}
