@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Multas de Tránsito</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 650px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 35px;
+            padding-bottom: 25px;
+            border-bottom: 3px solid #1f497d;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            color: #1f497d;
+            margin-bottom: 8px;
+        }
+        .header p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95rem;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            outline: none;
+        }
+        input[type="text"]:focus {
+            border-color: #1f497d;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #1f497d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #163561;
+        }
+        button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+        #resultado {
+            margin-top: 30px;
+            display: none;
+        }
+        .card {
+            border-radius: 10px;
+            padding: 25px;
+            border: 2px solid;
+        }
+        .card.pendiente {
+            background: #fff8e1;
+            border-color: #f59e0b;
+        }
+        .card.pagada {
+            background: #f0fdf4;
+            border-color: #22c55e;
+        }
+        .card.anulada {
+            background: #fff1f2;
+            border-color: #ef4444;
+        }
+        .card.error {
+            background: #fff1f2;
+            border-color: #ef4444;
+        }
+        .estado-badge {
+            display: inline-block;
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+        .estado-badge.pendiente { background: #fbbf24; color: #78350f; }
+        .estado-badge.pagada    { background: #22c55e; color: white; }
+        .estado-badge.anulada   { background: #ef4444; color: white; }
+        .datos-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .dato {
+            padding: 10px;
+            background: rgba(0,0,0,0.04);
+            border-radius: 6px;
+        }
+        .dato .etiqueta {
+            font-size: 0.75rem;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .dato .valor {
+            font-size: 1rem;
+            color: #222;
+            font-weight: 500;
+            margin-top: 3px;
+        }
+        .monto-destacado {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f497d;
+            text-align: center;
+            margin: 15px 0;
+        }
+        .cargando {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        @media (max-width: 500px) {
+            .datos-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Consulta de Multas de Tránsito</h1>
+        <p>Ingrese el código de su boleta para verificar el estado de su multa</p>
+    </div>
+
+    <div class="form-group">
+        <label for="codigo">Código de Boleta:</label>
+        <input
+            type="text"
+            id="codigo"
+            placeholder="Ej: BOL-20261101000001"
+            autocomplete="off"
+        />
+    </div>
+
+    <button id="btnConsultar" onclick="consultarMulta()">
+        Consultar Estado de Mi Multa
+    </button>
+
+    <div id="resultado"></div>
+</div>
+
+<script>
+    document.getElementById('codigo').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') consultarMulta();
+    });
+
+    async function consultarMulta() {
+        const codigo = document.getElementById('codigo').value.trim();
+        const btn = document.getElementById('btnConsultar');
+        const div = document.getElementById('resultado');
+
+        if (!codigo) {
+            alert('Por favor ingrese el código de su boleta.');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Consultando...';
+        div.style.display = 'block';
+        div.innerHTML = '<div class="cargando">Buscando su multa en el sistema...</div>';
+
+        try {
+            const respuesta = await fetch('/api/multa/' + encodeURIComponent(codigo));
+            const datos = await respuesta.json();
+
+            if (!respuesta.ok) {
+                div.innerHTML = `
+                    <div class="card error">
+                        <h3 style="color:#ef4444; margin-bottom:10px;">No encontrado</h3>
+                        <p style="color:#666;">${datos.error || 'No se encontró ninguna multa con ese código.'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const monto = parseFloat(datos.monto).toFixed(2);
+            const estado = datos.estado;
+
+            div.innerHTML = `
+                <div class="card ${estado}">
+                    <div style="text-align:center;">
+                        <span class="estado-badge ${estado}">${estado.toUpperCase()}</span>
+                    </div>
+
+                    <div class="monto-destacado">Bs. ${monto}</div>
+
+                    <div class="datos-grid">
+                        <div class="dato">
+                            <div class="etiqueta">Código de Boleta</div>
+                            <div class="valor">${datos.codigo}</div>
+                        </div>
+                        <div class="dato">
+                            <div class="etiqueta">Carnet de Identidad</div>
+                            <div class="valor">${datos.ci_conductor}</div>
+                        </div>
+                        <div class="dato" style="grid-column: span 2;">
+                            <div class="etiqueta">Nombre del Conductor</div>
+                            <div class="valor">${datos.nombre_conductor}</div>
+                        </div>
+                        <div class="dato" style="grid-column: span 2;">
+                            <div class="etiqueta">Tipo de Infracción</div>
+                            <div class="valor">${datos.tipo_infraccion}</div>
+                        </div>
+                        <div class="dato" style="grid-column: span 2;">
+                            <div class="etiqueta">Lugar de la Infracción</div>
+                            <div class="valor">${datos.lugar}</div>
+                        </div>
+                        <div class="dato">
+                            <div class="etiqueta">Fecha de la Infracción</div>
+                            <div class="valor">${datos.fecha}</div>
+                        </div>
+                        <div class="dato">
+                            <div class="etiqueta">Fecha de Pago</div>
+                            <div class="valor">${datos.fecha_pago ? datos.fecha_pago : 'Aún no pagada'}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            div.innerHTML = `
+                <div class="card error">
+                    <h3 style="color:#ef4444; margin-bottom:10px;">Error de conexión</h3>
+                    <p style="color:#666;">No se pudo conectar con el servidor.</p>
+                </div>
+            `;
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Consultar Estado de Mi Multa';
+        }
+    }
+</script>
+
+</body>
+</html>
